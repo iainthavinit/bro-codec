@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRO_CODEC — Admin</title>
+<link rel="stylesheet" href="/site/css/base.css">
+</head>
+<body>
+<div class="scan"></div>
+<div class="wrap wrap--wide">
+
+  <div class="site-header">
+    <div><span style="font-size:24px">🔐</span> <h1>BRO_CODEC</h1> <span class="version">ADMIN</span></div>
+  </div>
+
+  <nav class="site-nav" id="admin-nav" style="display:none">
+    <a href="/">← SITE</a>
+    <a href="/admin.html" class="active">ADMIN</a>
+    <a href="#" id="nav-quotes" class="active">QUOTES</a>
+    <a href="#" id="nav-memes">MEMES</a>
+    <a href="#" id="logout-btn" style="color:var(--red)">LOGOUT</a>
+  </nav>
+
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>🔐 ADMIN</h2>
+      <p>enter credentials to manage bro content</p>
+      <div class="form-group">
+        <label>EMAIL</label>
+        <input type="email" id="login-email" placeholder="admin@brocodec.com">
+      </div>
+      <div class="form-group">
+        <label>PASSWORD</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <div class="btn-row" style="justify-content:flex-start;margin-top:16px">
+        <button class="btn btn--primary" id="login-btn">SIGN IN</button>
+      </div>
+      <div id="login-error" class="form-error hidden"></div>
+    </div>
+  </div>
+
+  <!-- Admin Content (hidden until logged in) -->
+  <div id="admin-content" style="display:none">
+
+    <!-- Stats -->
+    <div class="admin-grid mb-2" id="stats-row">
+      <div class="admin-stat">
+        <div class="admin-stat__number" id="stat-quotes">—</div>
+        <div class="admin-stat__label">QUOTES</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat__number" id="stat-memes">—</div>
+        <div class="admin-stat__label">MEMES</div>
+      </div>
+    </div>
+
+    <!-- Quotes Section -->
+    <div id="section-quotes">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h3 style="font-size:13px;color:var(--green);letter-spacing:2px;font-weight:800">📝 QUOTES</h3>
+        <button class="btn btn--primary btn--small" id="add-quote-btn">+ ADD QUOTE</button>
+      </div>
+      <div id="quotes-list"></div>
+    </div>
+
+    <!-- Memes Section -->
+    <div id="section-memes" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h3 style="font-size:13px;color:var(--cyan);letter-spacing:2px;font-weight:800">🖼️ MEMES</h3>
+        <button class="btn btn--cyan btn--small" id="add-meme-btn">+ UPLOAD MEME</button>
+      </div>
+      <div id="memes-list"></div>
+    </div>
+  </div>
+
+  <div class="site-footer">BRO_CODEC ADMIN // manage the bro energy pipeline</div>
+</div>
+
+<!-- Quote Modal -->
+<div id="quote-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 id="quote-modal-title">ADD QUOTE</h3>
+    <input type="hidden" id="q-edit-id">
+    <div class="form-group">
+      <label>QUOTE TEXT *</label>
+      <textarea id="q-text" placeholder="Paste the quote here..." rows="3"></textarea>
+    </div>
+    <div class="admin-grid">
+      <div class="form-group">
+        <label>SOURCE</label>
+        <select id="q-source">
+          <option value="x">𝕏 (Twitter)</option>
+          <option value="discord">Discord</option>
+          <option value="youtube">YouTube</option>
+          <option value="reddit">Reddit</option>
+          <option value="personal">Personal / IRL</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>BRO SCORE (1-10)</label>
+        <input type="text" id="q-score" placeholder="7" value="7">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>SOURCE URL</label>
+      <input type="url" id="q-url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>SOURCE AUTHOR</label>
+      <input type="text" id="q-author" placeholder="@username or name">
+    </div>
+    <div class="form-group">
+      <label>TAGS (comma separated)</label>
+      <input type="text" id="q-tags" placeholder="hustle, wife, kids, workplace">
+    </div>
+    <div class="form-group">
+      <label>NOTES</label>
+      <textarea id="q-notes" placeholder="Context, why it's funny, etc." rows="2"></textarea>
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" id="q-published" checked> Published (visible on site)</label>
+    </div>
+    <div class="btn-row" style="justify-content:flex-start;gap:8px;margin-top:16px">
+      <button class="btn btn--primary" id="q-save-btn">SAVE</button>
+      <button class="btn btn--ghost" onclick="closeModal('quote-modal')">CANCEL</button>
+    </div>
+    <div id="q-error" class="form-error hidden"></div>
+  </div>
+</div>
+
+<!-- Meme Modal -->
+<div id="meme-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 id="meme-modal-title">UPLOAD MEME</h3>
+    <input type="hidden" id="m-edit-id">
+    <div class="form-group">
+      <label>TITLE *</label>
+      <input type="text" id="m-title" placeholder="Meme title...">
+    </div>
+    <div class="form-group">
+      <label>IMAGE *</label>
+      <input type="file" id="m-file" accept="image/*" style="font-size:11px;color:var(--dim)">
+      <div id="m-preview" style="margin-top:8px"></div>
+    </div>
+    <div class="form-group">
+      <label>DESCRIPTION</label>
+      <textarea id="m-desc" placeholder="What's the context?" rows="2"></textarea>
+    </div>
+    <div class="form-group">
+      <label>TAGS (comma separated)</label>
+      <input type="text" id="m-tags" placeholder="hustle, grind, wife">
+    </div>
+    <div class="form-group">
+      <label>SOURCE (where you found it)</label>
+      <input type="text" id="m-source" placeholder="@account, subreddit, etc.">
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" id="m-published" checked> Published (visible on meme vault)</label>
+    </div>
+    <div class="btn-row" style="justify-content:flex-start;gap:8px;margin-top:16px">
+      <button class="btn btn--cyan" id="m-save-btn">UPLOAD & SAVE</button>
+      <button class="btn btn--ghost" onclick="closeModal('meme-modal')">CANCEL</button>
+    </div>
+    <div id="m-error" class="form-error hidden"></div>
+  </div>
+</div>
+
+<script src="/site/js/supabase.js"></script>
+<script src="/site/js/utils.js"></script>
+<script>
+// === State ===
+let adminSection = 'quotes';
+
+// === Auth ===
+async function checkAuth() {
+  if (supabase.isLoggedIn()) {
+    // Try refreshing to verify token is still valid
+    const valid = await supabase.refreshSession();
+    if (valid) {
+      showAdmin();
+      return;
+    }
+  }
+  showLogin();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('admin-nav').style.display = 'none';
+}
+
+function showAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-content').style.display = 'block';
+  document.getElementById('admin-nav').style.display = 'flex';
+  loadStats();
+  loadQuotes();
+  loadMemes();
+}
+
+document.getElementById('login-btn').onclick = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  err.classList.add('hidden');
+  if (!email || !password) { err.textContent = 'Enter email and password'; err.classList.remove('hidden'); return; }
+  try {
+    document.getElementById('login-btn').disabled = true;
+    document.getElementById('login-btn').textContent = '⏳ ...';
+    await supabase.signIn(email, password);
+    showAdmin();
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.remove('hidden');
+  } finally {
+    document.getElementById('login-btn').disabled = false;
+    document.getElementById('login-btn').textContent = 'SIGN IN';
+  }
+};
+
+// Enter key on password field
+document.getElementById('login-password').onkeydown = e => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+};
+
+document.getElementById('logout-btn').onclick = async (e) => {
+  e.preventDefault();
+  await supabase.signOut();
+  showLogin();
+};
+
+// === Section navigation ===
+document.getElementById('nav-quotes').onclick = e => {
+  e.preventDefault();
+  adminSection = 'quotes';
+  document.getElementById('section-quotes').style.display = 'block';
+  document.getElementById('section-memes').style.display = 'none';
+  document.getElementById('nav-quotes').classList.add('active');
+  document.getElementById('nav-memes').classList.remove('active');
+};
+
+document.getElementById('nav-memes').onclick = e => {
+  e.preventDefault();
+  adminSection = 'memes';
+  document.getElementById('section-quotes').style.display = 'none';
+  document.getElementById('section-memes').style.display = 'block';
+  document.getElementById('nav-quotes').classList.remove('active');
+  document.getElementById('nav-memes').classList.add('active');
+};
+
+// === Stats ===
+async function loadStats() {
+  try {
+    const quotes = await supabase.query('quotes', { select: 'id', auth: true });
+    document.getElementById('stat-quotes').textContent = quotes.length;
+  } catch { document.getElementById('stat-quotes').textContent = '?'; }
+  try {
+    const memes = await supabase.query('memes', { select: 'id', auth: true });
+    document.getElementById('stat-memes').textContent = memes.length;
+  } catch { document.getElementById('stat-memes').textContent = '?'; }
+}
+
+// === Quotes ===
+async function loadQuotes() {
+  const list = document.getElementById('quotes-list');
+  list.innerHTML = '<span class="loading text-dim">Loading...</span>';
+  try {
+    const quotes = await supabase.query('quotes', { order: 'created_at.desc', auth: true });
+    if (!quotes.length) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">📝</div><p>No quotes yet. Add your first one.</p></div>';
+      return;
+    }
+    list.innerHTML = `
+      <div class="panel" style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr>
+            <th>QUOTE</th><th>SOURCE</th><th>SCORE</th><th>STATUS</th><th>DATE</th><th></th>
+          </tr></thead>
+          <tbody>${quotes.map(q => `
+            <tr>
+              <td style="max-width:320px;white-space:pre-wrap">${esc(q.text.length > 120 ? q.text.slice(0, 120) + '...' : q.text)}</td>
+              <td>${sourceBadge(q.source)}</td>
+              <td>${broScoreDisplay(q.bro_score)}</td>
+              <td><span style="color:${q.is_published ? 'var(--green)' : 'var(--dim)'}">${q.is_published ? '● LIVE' : '○ DRAFT'}</span></td>
+              <td style="white-space:nowrap;font-size:10px">${formatDate(q.created_at)}</td>
+              <td class="actions">
+                <button class="btn--icon" onclick="editQuote('${q.id}')" title="Edit">✏️</button>
+                <button class="btn--icon" onclick="deleteQuote('${q.id}')" title="Delete">🗑️</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state text-red">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+// Quote modal
+function openQuoteModal(data = null) {
+  document.getElementById('quote-modal-title').textContent = data ? 'EDIT QUOTE' : 'ADD QUOTE';
+  document.getElementById('q-edit-id').value = data?.id || '';
+  document.getElementById('q-text').value = data?.text || '';
+  document.getElementById('q-source').value = data?.source || 'x';
+  document.getElementById('q-score').value = data?.bro_score || '7';
+  document.getElementById('q-url').value = data?.source_url || '';
+  document.getElementById('q-author').value = data?.source_author || '';
+  document.getElementById('q-tags').value = (data?.tags || []).join(', ');
+  document.getElementById('q-notes').value = data?.notes || '';
+  document.getElementById('q-published').checked = data?.is_published !== false;
+  document.getElementById('q-error').classList.add('hidden');
+  document.getElementById('quote-modal').classList.remove('hidden');
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+document.getElementById('add-quote-btn').onclick = () => openQuoteModal();
+
+document.getElementById('q-save-btn').onclick = async () => {
+  const text = document.getElementById('q-text').value.trim();
+  const err = document.getElementById('q-error');
+  err.classList.add('hidden');
+  if (!text) { err.textContent = 'Quote text is required'; err.classList.remove('hidden'); return; }
+
+  const data = {
+    text,
+    source: document.getElementById('q-source').value,
+    bro_score: Math.max(1, Math.min(10, parseInt(document.getElementById('q-score').value) || 7)),
+    source_url: document.getElementById('q-url').value.trim() || null,
+    source_author: document.getElementById('q-author').value.trim() || null,
+    tags: document.getElementById('q-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    notes: document.getElementById('q-notes').value.trim() || null,
+    is_published: document.getElementById('q-published').checked,
+  };
+
+  const editId = document.getElementById('q-edit-id').value;
+  try {
+    document.getElementById('q-save-btn').disabled = true;
+    if (editId) {
+      await supabase.update('quotes', editId, data);
+      showToast('Quote updated');
+    } else {
+      await supabase.insert('quotes', data);
+      showToast('Quote added');
+    }
+    closeModal('quote-modal');
+    loadQuotes();
+    loadStats();
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.remove('hidden');
+  } finally {
+    document.getElementById('q-save-btn').disabled = false;
+  }
+};
+
+let _quotesCache = [];
+async function editQuote(id) {
+  try {
+    const quotes = await supabase.query('quotes', { filter: `id=eq.${id}`, auth: true });
+    if (quotes[0]) openQuoteModal(quotes[0]);
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteQuote(id) {
+  if (!confirm('Delete this quote?')) return;
+  try {
+    await supabase.delete('quotes', id);
+    showToast('Quote deleted');
+    loadQuotes();
+    loadStats();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// === Memes ===
+async function loadMemes() {
+  const list = document.getElementById('memes-list');
+  list.innerHTML = '<span class="loading text-dim">Loading...</span>';
+  try {
+    const memes = await supabase.query('memes', { order: 'created_at.desc', auth: true });
+    if (!memes.length) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🖼️</div><p>No memes yet. Upload your first one.</p></div>';
+      return;
+    }
+    list.innerHTML = `<div class="gallery-grid">${memes.map(m => `
+      <div class="gallery-card">
+        <img src="${esc(m.image_url || '')}" alt="${esc(m.title)}" loading="lazy" style="cursor:pointer" onclick="window.open('${esc(m.image_url)}','_blank')"
+          onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%23111%22 width=%22400%22 height=%22300%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22%23333%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22monospace%22>?</text></svg>'">
+        <div class="gallery-card__info">
+          <div class="gallery-card__title">${esc(m.title)}</div>
+          <div class="gallery-card__meta">
+            <span style="color:${m.is_published ? 'var(--green)' : 'var(--dim)'}">
+              ${m.is_published ? '● LIVE' : '○ DRAFT'}
+            </span>
+            <span style="font-size:10px">⬇ ${m.download_count || 0}</span>
+          </div>
+          <div class="actions mt-1">
+            <button class="btn--ghost btn--small" onclick="editMeme('${m.id}')">✏️ Edit</button>
+            <button class="btn--ghost btn--small" style="color:var(--red)" onclick="deleteMeme('${m.id}', '${esc(m.image_path)}')">🗑️</button>
+          </div>
+        </div>
+      </div>`).join('')}</div>`;
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state text-red">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+// Meme modal
+function openMemeModal(data = null) {
+  document.getElementById('meme-modal-title').textContent = data ? 'EDIT MEME' : 'UPLOAD MEME';
+  document.getElementById('m-edit-id').value = data?.id || '';
+  document.getElementById('m-title').value = data?.title || '';
+  document.getElementById('m-desc').value = data?.description || '';
+  document.getElementById('m-tags').value = (data?.tags || []).join(', ');
+  document.getElementById('m-source').value = data?.source || '';
+  document.getElementById('m-published').checked = data?.is_published !== false;
+  document.getElementById('m-file').value = '';
+  document.getElementById('m-preview').innerHTML = data?.image_url
+    ? `<img src="${esc(data.image_url)}" style="max-width:200px;border-radius:4px">`
+    : '';
+  document.getElementById('m-error').classList.add('hidden');
+  // For edits, file is optional
+  document.getElementById('m-file').required = !data;
+  document.getElementById('meme-modal').classList.remove('hidden');
+}
+
+document.getElementById('add-meme-btn').onclick = () => openMemeModal();
+
+document.getElementById('m-file').onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      document.getElementById('m-preview').innerHTML = `<img src="${ev.target.result}" style="max-width:200px;border-radius:4px">`;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+document.getElementById('m-save-btn').onclick = async () => {
+  const title = document.getElementById('m-title').value.trim();
+  const file = document.getElementById('m-file').files[0];
+  const editId = document.getElementById('m-edit-id').value;
+  const err = document.getElementById('m-error');
+  err.classList.add('hidden');
+
+  if (!title) { err.textContent = 'Title is required'; err.classList.remove('hidden'); return; }
+  if (!editId && !file) { err.textContent = 'Image is required'; err.classList.remove('hidden'); return; }
+
+  const btn = document.getElementById('m-save-btn');
+  try {
+    btn.disabled = true;
+    btn.textContent = '⏳ UPLOADING...';
+
+    let image_path = null;
+    let image_url = null;
+
+    if (file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const filename = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      image_path = filename;
+      image_url = await supabase.uploadFile('memes', filename, file);
+    }
+
+    const data = {
+      title,
+      description: document.getElementById('m-desc').value.trim() || null,
+      tags: document.getElementById('m-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+      source: document.getElementById('m-source').value.trim() || null,
+      is_published: document.getElementById('m-published').checked,
+    };
+
+    if (image_path) {
+      data.image_path = image_path;
+      data.image_url = image_url;
+    }
+
+    if (editId) {
+      await supabase.update('memes', editId, data);
+      showToast('Meme updated');
+    } else {
+      await supabase.insert('memes', data);
+      showToast('Meme uploaded');
+    }
+    closeModal('meme-modal');
+    loadMemes();
+    loadStats();
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'UPLOAD & SAVE';
+  }
+};
+
+async function editMeme(id) {
+  try {
+    const memes = await supabase.query('memes', { filter: `id=eq.${id}`, auth: true });
+    if (memes[0]) openMemeModal(memes[0]);
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteMeme(id, imagePath) {
+  if (!confirm('Delete this meme?')) return;
+  try {
+    await supabase.delete('memes', id);
+    if (imagePath) supabase.deleteFile('memes', imagePath).catch(() => {});
+    showToast('Meme deleted');
+    loadMemes();
+    loadStats();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.onclick = e => { if (e.target === overlay) overlay.classList.add('hidden'); };
+});
+
+// Init
+checkAuth();
+</script>
+</body>
+</html>

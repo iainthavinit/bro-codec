@@ -1,0 +1,12 @@
+name = "bro-codec-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# KV namespace for storing curated bro posts
+[[kv_namespaces]]
+binding = "BRO_BANK"
+id = "8dd5505462554527a6c5e64d13198bd0"
+
+# Cron trigger — runs every 6 hours to collect bro posts
+[triggers]
+crons = ["0 */6 * * *"]
